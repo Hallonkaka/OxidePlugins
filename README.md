@@ -12,6 +12,8 @@ Regarding bugs, feature requests, or other issues in and around the plugins plea
 ###UiPlus
 UiPlus is a plugin focusing on adding information for the user in a non-intrusive interface based on the interface by the developers already present in the game.
 
+[Link to the page on OxideMod.org](http://oxidemod.org/plugins/uiplus.2088/).
+
 ####Images
 ![Close-up](http://imgur.com/qrXDviH.png)
 
