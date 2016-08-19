@@ -10,7 +10,7 @@ Regarding bugs, feature requests, or other issues in and around the plugins plea
 #Plugins
 ##Rust
 ###UiPlus
-UiPlus is a plugin focussing on adding information for the user in a non-intrusive interface based on the interface by the developers already present in the game.
+UiPlus is a plugin focusing on adding information for the user in a non-intrusive interface based on the interface by the developers already present in the game.
 
 ####Images
 ![Close-up](http://imgur.com/qrXDviH.png)
@@ -44,15 +44,15 @@ The RectTransform component allows control over the height, width, and positioni
 
 The Image component allows control over the image displayed and the color of it. An image can currently not be added to the background image components.
 * Color
-	* Color is seprated into four values; Red, Green, Blue, and Alpha respectively.
+	* Color is separated into four values; Red, Green, Blue, and Alpha respectively.
 * Uri
 	* A Uniform Resource Identifier can be an URL linking directly to an images, as it is by default, or towards a file locally hosted. A URL has to start form http://, and a locally hosted file can start with file:///, or you can create a folder named after the plugin "UiPlus" in the data folder and add a png file to that. After which you only have to write the image name followed by .png. For example "clockIcon.png"
 
 The Text component allows control over the label displayed per panel.
 * Alignment
-	* Alignment refers to where the anchor point of the labels is. The possible options are; lowercenter, lowerleft, lowerright, middlecenter, middleleft, middleright, uppercenter, upperleft, upperright.
+	* Alignment refers to where the anchor point of the labels is. The possible options are; LowerCenter, LowerLeft, LowerRight, MiddleCenter, MiddleLeft, MiddleRight, UpperCenter, UpperLeft, UpperRight.
 * Color
-	* Color is seprated into four values; Red, Green, Blue, and Alpha respectively.
+	* Color is separated into four values; Red, Green, Blue, and Alpha respectively.
 * Font
 	* The font is the name of the font used for displaying the text.
 * Font size
