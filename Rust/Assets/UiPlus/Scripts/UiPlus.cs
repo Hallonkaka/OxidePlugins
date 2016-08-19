@@ -390,7 +390,6 @@ namespace Oxide.Plugins {
         /// <summary>Called after the server startup has been completed and is awaiting connections.</summary>
         [HookMethod("OnServerInitialized")]
         private void OnServerInitialized() {
-            PrintWarning("OnServerInitialized");
             // Initializes the static containers for each panel.
             staticContainers = new CuiElementContainer[panelCount];
             for (int i = 0; i < panelCount; i++) {
