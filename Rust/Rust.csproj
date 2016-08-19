@@ -1,0 +1,103 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{765CA553-5765-4CF7-A60E-13555C11455C}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Rust</RootNamespace>
+    <AssemblyName>Rust</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\Libraries\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>..\Libraries\Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
+    <Reference Include="Oxide.Core">
+      <HintPath>..\Libraries\Oxide.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Oxide.Ext.CSharp">
+      <HintPath>..\Libraries\Oxide.Ext.CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Oxide.Ext.SQLite">
+      <HintPath>..\Libraries\Oxide.Ext.SQLite.dll</HintPath>
+    </Reference>
+    <Reference Include="Oxide.Ext.Unity">
+      <HintPath>..\Libraries\Oxide.Ext.Unity.dll</HintPath>
+    </Reference>
+    <Reference Include="Oxide.Game.Rust">
+      <HintPath>Libraries\Oxide.Game.Rust.dll</HintPath>
+    </Reference>
+    <Reference Include="Rust.Data">
+      <HintPath>Libraries\Rust.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="Rust.UI">
+      <HintPath>Libraries\Rust.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="Rust.Xp">
+      <HintPath>Libraries\Rust.Xp.dll</HintPath>
+    </Reference>
+    <Reference Include="RustBuild">
+      <HintPath>Libraries\RustBuild.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="UnityEngine">
+      <HintPath>..\Libraries\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.Networking">
+      <HintPath>..\Libraries\UnityEngine.Networking.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\Libraries\UnityEngine.UI.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Assets\UiPlus\Scripts\UiPlus.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Assets\UiPlus\Images\Icons\" />
+    <Folder Include="Assets\UiPlus\Sceenshots\" />
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

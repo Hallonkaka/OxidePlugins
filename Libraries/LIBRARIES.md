@@ -1,0 +1,9 @@
+Assembly-CSharp.dll
+Assembly-CSharp-firstpass.dll
+Oxide.Core.dll
+Oxide.Ext.CSharp.dll
+Oxide.Ext.SQLite.dll
+Oxide.Ext.Unity.dll
+UnityEngine.dll
+UnityEngine.Networking.dll
+UnityEngine.UI.dll

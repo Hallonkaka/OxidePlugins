@@ -1,0 +1,29 @@
+# General
+# Files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+# Libraries
+Libraries/Assembly-CSharp.dll
+Libraries/Assembly-CSharp-firstpass.dll
+Libraries/Oxide.Core.dll
+Libraries/Oxide.Ext.CSharp.dll
+Libraries/Oxide.Ext.SQLite.dll
+Libraries/Oxide.Ext.Unity.dll
+Libraries/UnityEngine.dll
+Libraries/UnityEngine.Networking.dll
+Libraries/UnityEngine.UI.dll
+
+# Rust
+# Directories
+Rust.vs/
+Rust/bin/
+Rust/obj/
+# Libraries
+Rust/Libraries/Oxide.Game.Rust.dll
+Rust/Libraries/Rust.Data.dll
+Rust/Libraries/Rust.UI.dll
+Rust/Libraries/Rust.Xp.dll
+Rust/Libraries/RustBuild.dll
