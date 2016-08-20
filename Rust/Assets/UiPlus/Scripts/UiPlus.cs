@@ -22,7 +22,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 namespace Oxide.Plugins {
-    [Info("UiPlus", "RedKenrok", "1.0.0")]
+    [Info("UiPlus", "RedKenrok", "1.0.0", ResourceId = 2088)]
     [Description("Adds user elements to the user interface containing; the active players count, maximum player slots, sleeping players, and ingame time.")]
     internal class UiPlus : RustPlugin {
 
