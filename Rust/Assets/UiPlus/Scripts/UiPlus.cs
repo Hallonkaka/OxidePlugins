@@ -133,6 +133,8 @@ namespace Oxide.Plugins {
         /// <summary>The interval between clock panel updates in milliseconds.</summary>
         private int clockUpdateInterval = 2000;
 
+        private bool activePlayerFill = true;
+
         /// <summary>An array of data from each panel ordered in the same as the PanelTypes enum.</summary>
         private PanelData[] panelsData = new PanelData[3] {
             // Active
@@ -279,6 +281,8 @@ namespace Oxide.Plugins {
                 addPanels[i] = CheckConfigFile("__Create " + ((PanelTypes)i).ToString() + " panel", addPanels[i], ref defaultApplied);
                 InitializePanelData(ref panelsData[i], ref defaultApplied);
             }
+
+            activePlayerFill = CheckConfigFile("_Active player counter fill", activePlayerFill, ref defaultApplied);
 
             clock24Hour = CheckConfigFile("_Clock 24 hour format", clock24Hour, ref defaultApplied);
             clockShowSeconds = CheckConfigFile("_Clock show seconds", clockShowSeconds, ref defaultApplied);
@@ -488,7 +492,7 @@ namespace Oxide.Plugins {
             List<StringPlus.ReplacementData> replacements = new List<StringPlus.ReplacementData>();
             switch (panelType) {
                 case PanelTypes.Active:
-                    replacements.Add(new StringPlus.ReplacementData(replacementPrefix + FieldTypes.PlayersActive.ToString().ToUpper() + replacementSufix, BasePlayer.activePlayerList.Count.ToString().PadLeft(ConVar.Server.maxplayers.ToString().Length, '0')));
+                    replacements.Add(new StringPlus.ReplacementData(replacementPrefix + FieldTypes.PlayersActive.ToString().ToUpper() + replacementSufix, (activePlayerFill) ? BasePlayer.activePlayerList.Count.ToString().PadLeft(ConVar.Server.maxplayers.ToString().Length, '0') : BasePlayer.activePlayerList.Count.ToString()));
                     replacements.Add(new StringPlus.ReplacementData(replacementPrefix + FieldTypes.PlayerMax.ToString().ToUpper() + replacementSufix, ConVar.Server.maxplayers.ToString()));
                     break;
                 case PanelTypes.Sleeping:
