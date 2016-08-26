@@ -27,6 +27,7 @@ The plugin adds the possibility for enabling several highly customizable panels:
 	* Able to reflect the current in-game time down to the seconds. It also allows to switch between a 12 hour and 24 hour format.
 
 ####Planned
+* Improve readability of the configuration file.
 * Add player coordinates.
 * Add player facing direction.
 * Add an icon indicating helicopter alerts.
