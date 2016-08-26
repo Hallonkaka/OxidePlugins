@@ -9,7 +9,6 @@
 //      GNU GENERAL PUBLIC LICENSE (Version 3, 29 June 2007)
 //
 using Oxide.Core;
-using Oxide.Core.Plugins;
 using Oxide.Game.Rust.Cui;
 
 using System;
@@ -21,521 +20,25 @@ using System.Text;
 using UnityEngine;
 
 namespace Oxide.Plugins {
-    [Info("UiPlus", "RedKenrok", "1.0.0", ResourceId = 2088)]
-    [Description("Adds user elements to the user interface containing; the active players count, maximum player slots, sleeping players, and ingame time.")]
-    public class UiPlus : BasePlugin.BaseUiPlus {
+    [Info("NewPlugin", "RedKenrok", "1.0.0", ResourceId = 99999)]
+    [Description("A new and totally funtional plugin.")]
+    // Rename 'NewPlugin' to the name of your plugin.
+    public class NewPlugin : BasePlugin.BasePlus {
         /// <summary>The name of the plugin.</summary>
         public override string pluginName {
             get {
-                return "UiPlus";
+                // Change this to same name as the class.
+                return "NewPlugin";
             }
         }
-
-        #region Enums
-        /// <summary>The different panels that the plugin can display.</summary>
-        private enum PanelTypes { Active = 0, Sleeping = 1, Clock = 2 };
-        /// <summary>The amount of different panels.</summary>
-        private static readonly int panelTypesCount = EnumPlus.Count<PanelTypes>();
-
-        /// <summary>The different fields that the plugin can display per panel.</summary>
-        private enum FieldTypes { PlayersActive, PlayerMax, PlayersSleeping, Time };
-        #endregion
-
-        #region Classes
-        /// <summary>A struct that can contain all the component data for one panel.</summary>
-        private struct PanelData {
-            /// <summary>The panel type to which this data belongs.</summary>
-            public PanelTypes panelType;
-
-            /// <summary>The data for the CuiRectTransformComponent for the background of the panel.</summary>
-            public Dictionary<string, object> backgroundRect;
-            /// <summary>The data for the CuiImageComponent for the background of the panel.</summary>
-            public Dictionary<string, object> backgroundImage;
-            /// <summary>The data for the CuiRectTransformComponent for the icon of the panel.</summary>
-            public Dictionary<string, object> iconRect;
-            /// <summary>The data for the CuiImageComponent for the icon of the panel.</summary>
-            public Dictionary<string, object> iconImage;
-            /// <summary>The data for the CuiRectTransformComponent for the text of the panel.</summary>
-            public Dictionary<string, object> textRect;
-            /// <summary>The data for the CuiTextComponent for the text of the panel.</summary>
-            public Dictionary<string, object> textText;
-
-            /// <summary>Constructor call for the PanelData struct.</summary>
-            /// <param name="backgroundRect">The data for the CuiRectTransformComponent for the background of the panel.</param>
-            /// <param name="backgroundImage">The data for the CuiImageComponent for the background of the panel.</param>
-            /// <param name="iconRect">The data for the CuiRectTransformComponent for the icon of the panel.</param>
-            /// <param name="iconImage">The data for the CuiImageComponent for the icon of the panel.</param>
-            /// <param name="textRect">The data for the CuiRectTransformComponent for the text of the panel.</param>
-            /// <param name="textText">The data for the CuiTextComponent for the text of the panel.</param>
-            public PanelData(PanelTypes panelType, Dictionary<string, object> backgroundRect, Dictionary<string, object> backgroundImage, Dictionary<string, object> iconRect, Dictionary<string, object> iconImage, Dictionary<string, object> textRect, Dictionary<string, object> textText) {
-                this.panelType = panelType;
-
-                this.backgroundRect = backgroundRect;
-                this.backgroundImage = backgroundImage;
-                this.iconRect = iconRect;
-                this.iconImage = iconImage;
-                this.textRect = textRect;
-                this.textText = textText;
-            }
-        }
-        #endregion
-
-        #region Variables
-        /// <summary>The static containers in the form of an array ordered according to the panels enumerator.</summary>
-        private CuiElementContainer[] staticContainers;
-
-        /// <summary>The character used in between values of the Json.</summary>
-        private static readonly char valueSeperator = ' ';
-
-        /// <summary>The character put before the display field value in order to signal it has to be replaced.</summary>
-        private static readonly char replacementPrefix = '{';
-        /// <summary>The character put after the display field value in order to signal it has to be replaced.</summary>
-        private static readonly char replacementSufix = '}';
-
-        /// <summary>Directly retrieves time from the game.</summary>
-        private string TIMERAW {
-            get {
-                if (clock24Hour) {
-                    if (clockShowSeconds) {
-                        return TOD_Sky.Instance.Cycle.DateTime.ToString("HH:mm:ss");
-                    }
-                    else {
-                        return TOD_Sky.Instance.Cycle.DateTime.ToString("HH:mm");
-                    }
-                }
-                else {
-                    if (clockShowSeconds) {
-                        return TOD_Sky.Instance.Cycle.DateTime.ToString("h:mm:ss tt");
-                    }
-                    else {
-                        return TOD_Sky.Instance.Cycle.DateTime.ToString("h:mm tt");
-                    }
-                }
-            }
-        }
-
-        /// <summary>Holds the time as a string value.</summary>
-        private string TIME = "";
-        #endregion
-
-        #region Variables panel specifics
-        /// <summary>Which panels to add ordered like the PanelTypes enum.</summary>
-        private bool[] addPanels = new bool[3] {
-            true,
-            true,
-            true
-        };
-
-        /// <summary>Whether the clock displays in a 24 or 12 hour format.</summary>
-        private bool clock24Hour = true;
-        /// <summary>Whether the clock also displays the seconds.</summary>
-        private bool clockShowSeconds = false;
-        /// <summary>The interval between clock panel updates in milliseconds.</summary>
-        private int clockUpdateInterval = 2000;
-
-        /// <summary>An array of data from each panel ordered in the same as the PanelTypes enum.</summary>
-        private PanelData[] panelsData = new PanelData[3] {
-            // Active
-            new PanelData(
-                // PanelType
-                PanelTypes.Active,
-                // Background Rect
-                new Dictionary<string, object> {
-                    { RectTransformProperties.anchorMin, "0 0" },
-                    { RectTransformProperties.anchorMax, "0.048 0.036" },
-                    { RectTransformProperties.offset, "81 72" }
-                },
-                // Background Image
-                new Dictionary<string, object> {
-                    { ImageProperties.color, "1 0.95 0.875 0.025" }
-                },
-                // Icon Rect
-                new Dictionary<string, object> {
-                    { RectTransformProperties.anchorMin, "0 0" },
-                    { RectTransformProperties.anchorMax, "0.325 0.75" },
-                    { RectTransformProperties.offset, "2 3" }
-                },
-                // Icon Icon
-                new Dictionary<string, object> {
-                    { ImageProperties.color, "0.7 0.7 0.7 1" },
-                    { ImageProperties.uri, "http://i.imgur.com/UY0y5ZI.png" }
-                },
-                // Text Rect
-                new Dictionary<string, object> {
-                    { RectTransformProperties.anchorMin, "0 0" },
-                    { RectTransformProperties.anchorMax, "1 1" },
-                    { RectTransformProperties.offset, "24 0" }
-                },
-                // Text Text
-                new Dictionary<string, object> {
-                    { TextProperties.align, "MiddleLeft" },
-                    { TextProperties.color, "0.85 0.85 0.85 0.5" },
-                    { TextProperties.font, new CuiTextComponent().Font },
-                    { TextProperties.fontSize, 14.ToString() },
-                    { TextProperties.text, replacementPrefix + FieldTypes.PlayersActive.ToString().ToUpper() + replacementSufix + "/" + replacementPrefix + FieldTypes.PlayerMax.ToString().ToUpper() + replacementSufix }
-                }
-            ),
-            // Sleeping
-            new PanelData(
-                // PanelType
-                PanelTypes.Sleeping,
-                // Background Rect
-                new Dictionary<string, object> {
-                    { RectTransformProperties.anchorMin, "0 0" },
-                    { RectTransformProperties.anchorMax, "0.049 0.036" },
-                    { RectTransformProperties.offset, "145 72" }
-                },
-                // Background Image
-                new Dictionary<string, object> {
-                    { ImageProperties.color, "1 0.95 0.875 0.025" }
-                },
-                // Icon Rect
-                new Dictionary<string, object> {
-                    { RectTransformProperties.anchorMin, "0 0" },
-                    { RectTransformProperties.anchorMax, "0.325 0.75" },
-                    { RectTransformProperties.offset, "2 3" }
-                },
-                // Icon Icon
-                new Dictionary<string, object> {
-                    { ImageProperties.color, "0.7 0.7 0.7 1" },
-                    { ImageProperties.uri, "http://i.imgur.com/mvUBBOB.png" }
-                },
-                // Text Rect
-                new Dictionary<string, object> {
-                    { RectTransformProperties.anchorMin, "0 0" },
-                    { RectTransformProperties.anchorMax, "1 1" },
-                    { RectTransformProperties.offset, "24 0" }
-                },
-                // Text Text
-                new Dictionary<string, object> {
-                    { TextProperties.align, "MiddleLeft" },
-                    { TextProperties.color, "0.85 0.85 0.85 0.5" },
-                    { TextProperties.font, new CuiTextComponent().Font },
-                    { TextProperties.fontSize, 14.ToString() },
-                    { TextProperties.text, replacementPrefix + FieldTypes.PlayersSleeping.ToString().ToUpper() + replacementSufix }
-                }
-            ),
-            // Clock
-            new PanelData(
-                // PanelType
-                PanelTypes.Clock,
-                // Background Rect
-                new Dictionary<string, object> {
-                    { RectTransformProperties.anchorMin, "0 0" },
-                    { RectTransformProperties.anchorMax, "0.049 0.036" },
-                    { RectTransformProperties.offset, "16 72" }
-                },
-                // Background Image
-                new Dictionary<string, object> {
-                    { ImageProperties.color, "1 0.95 0.875 0.025" }
-                },
-                // Icon Rect
-                new Dictionary<string, object> {
-                    { RectTransformProperties.anchorMin, "0 0" },
-                    { RectTransformProperties.anchorMax, "0.325 0.75" },
-                    { RectTransformProperties.offset, "2 3" }
-                },
-                // Icon Icon
-                new Dictionary<string, object> {
-                    { ImageProperties.color, "0.7 0.7 0.7 1" },
-                    { ImageProperties.uri, "http://i.imgur.com/CycsoyW.png" }
-                },
-                // Text Rect
-                new Dictionary<string, object> {
-                    { RectTransformProperties.anchorMin, "0 0" },
-                    { RectTransformProperties.anchorMax, "1 1" },
-                    { RectTransformProperties.offset, "24 0" }
-                },
-                // Text Text
-                new Dictionary<string, object> {
-                    { TextProperties.align, "MiddleLeft" },
-                    { TextProperties.color, "0.85 0.85 0.85 0.5" },
-                    { TextProperties.font, new CuiTextComponent().Font },
-                    { TextProperties.fontSize, 14.ToString() },
-                    { TextProperties.text, replacementPrefix + FieldTypes.Time.ToString().ToUpper() + replacementSufix }
-                }
-            )
-        };
-        #endregion
-
-        #region Configuration
-        /// <summary>Initializes the data for the given panel.</summary>
-        /// <param name="panelData">The panel data to be initialized.</param>
-        /// <param name="defaultAddedToConfig">Wether or not a new field is added to the config.</param>
-        private void InitializePanelData(ref PanelData panelData, ref bool defaultAddedToConfig) {
-            panelData.backgroundRect = CheckConfigFile(panelData.panelType.ToString() + " backgroundRect", panelData.backgroundRect, ref defaultAddedToConfig);
-            panelData.backgroundImage = CheckConfigFile(panelData.panelType.ToString() + " backgroundImage", panelData.backgroundImage, ref defaultAddedToConfig);
-            panelData.iconRect = CheckConfigFile(panelData.panelType.ToString() + " iconRect", panelData.iconRect, ref defaultAddedToConfig);
-            panelData.iconImage = CheckConfigFile(panelData.panelType.ToString() + " iconImage", panelData.iconImage, ref defaultAddedToConfig);
-            panelData.textRect = CheckConfigFile(panelData.panelType.ToString() + " textRect", panelData.textRect, ref defaultAddedToConfig);
-            panelData.textText = CheckConfigFile(panelData.panelType.ToString() + " textText", panelData.textText, ref defaultAddedToConfig);
-        }
-
-        /// <summary>Retrieves all the data from the configuration file and adds default data if it is not present.</summary>
-        private void InitializeConfiguration() {
-            bool defaultApplied = false;
-
-            for (int i = 0; i < panelTypesCount; i++) {
-                addPanels[i] = CheckConfigFile("__Create " + ((PanelTypes)i).ToString() + " panel", addPanels[i], ref defaultApplied);
-                InitializePanelData(ref panelsData[i], ref defaultApplied);
-            }
-
-            clock24Hour = CheckConfigFile("_Clock 24 hour format", clock24Hour, ref defaultApplied);
-            clockShowSeconds = CheckConfigFile("_Clock show seconds", clockShowSeconds, ref defaultApplied);
-            clockUpdateInterval = CheckConfigFile("_Clock update frequency in milliseconds", clockUpdateInterval, ref defaultApplied);
-
-            SaveConfig();
-
-            if (defaultApplied) {
-                PrintWarning("New field(s) added to the configuration file please view and edit if necessary.");
-            }
-        }
-        #endregion
-
-        #region Hooks
-        /// <summary>Called when a plugin has finished loading.</summary>
-        [HookMethod("Loaded")]
-        private void Loaded() {
-            // Initializes the configuration.
-            //PrintWarning("Config read and write disabled.");
-            InitializeConfiguration();
-
-            // Takes the background rect of the panel and applies the text rect of the panel to calculate the result that will be used.
-            for (int i = 0; i < panelTypesCount; i++) {
-                panelsData[i].textRect[RectTransformProperties.anchorMin] = StringPlus.ToString((Vector2) (MathPlus.Multiply(MathPlus.ToVector(panelsData[i].backgroundRect[RectTransformProperties.anchorMin].ToString(), valueSeperator), MathPlus.ToVector(panelsData[i].textRect[RectTransformProperties.anchorMin].ToString(), valueSeperator))));
-                panelsData[i].textRect[RectTransformProperties.anchorMax] = StringPlus.ToString((Vector2) (MathPlus.Multiply(MathPlus.ToVector(panelsData[i].backgroundRect[RectTransformProperties.anchorMax].ToString(), valueSeperator), MathPlus.ToVector(panelsData[i].textRect[RectTransformProperties.anchorMax].ToString(), valueSeperator))));
-                panelsData[i].textRect[RectTransformProperties.offset] = StringPlus.ToString((Vector2) (MathPlus.ToVector(panelsData[i].backgroundRect[RectTransformProperties.offset].ToString(), valueSeperator) + MathPlus.ToVector(panelsData[i].textRect[RectTransformProperties.offset].ToString(), valueSeperator)));
-            }
-        }
-
-        /// <summary>Called after the server startup has been completed and is awaiting connections.</summary>
-        [HookMethod("OnServerInitialized")]
-        private void OnServerInitialized() {
-            // Initializes the static containers for each panel.
-            staticContainers = new CuiElementContainer[panelTypesCount];
-            // Starts retrieving the icons and rebuilds the static panels once they are loaded.
-            FileManager.OnFileLoaded onIconLoaded = new FileManager.OnFileLoaded(IconLoaded);
-            for (int i = 0; i < panelTypesCount; i++) {
-                FileManager.InitializeFile(pluginName, ((PanelTypes)i).ToString(), panelsData[i].iconImage[ImageProperties.uri].ToString(), onIconLoaded);
-            }
-
-            // Adds and updates the panels for each active player.
-            for (int i = 0; i < BasePlayer.activePlayerList.Count * panelTypesCount; i++) {
-                if (addPanels[i % panelTypesCount]) {
-                    UpdateField(BasePlayer.activePlayerList[i / panelTypesCount], (PanelTypes)(i % panelTypesCount));
-                }
-            }
-
-            if (addPanels[(int)PanelTypes.Clock]) {
-                StartRepeatingFieldUpdate(PanelTypes.Clock, clockUpdateInterval);
-            }
-        }
-
-        /// <summary>Called when a plugin is being unloaded.</summary>
-        [HookMethod("Unload")]
-        private void Unload() {
-            // Removes all panels for the players.
-            for (int i = 0; i < BasePlayer.activePlayerList.Count; i++) {
-                for (int j = 0; j < panelTypesCount * containerTypesCount; j++) {
-                    if (addPanels[j % panelTypesCount]) {
-                        CuiHelper.DestroyUi(BasePlayer.activePlayerList[i], UniqueElementName(((ContainerTypes)(j / panelTypesCount)), ContainerParent, ((PanelTypes)(j % panelTypesCount)).ToString()));
-                    }
-                }
-            }
-        }
-
-        /// <summary>Called when the player is initializing (after they’ve connected, before they wake up).</summary>
-        /// <param name="player"></param>
-        [HookMethod("OnPlayerInit")]
-        private void OnPlayerInit(BasePlayer player) {
-            if (addPanels[(int)PanelTypes.Active]) {
-                for (int i = 0; i < BasePlayer.activePlayerList.Count; i++) {
-                    UpdateFieldDelayed(BasePlayer.activePlayerList[i], PanelTypes.Active);
-                }
-            }
-        }
-
-        /// <summary>Called when the player awakes.</summary>
-        /// <param name="player"></param>
-        [HookMethod("OnPlayerSleepEnded")]
-        private void OnPlayerSleepEnded(BasePlayer player) {
-            for (int i = 0; i < panelTypesCount; i++) {
-                if (addPanels[i]) {
-                    CuiHelper.AddUi(player, staticContainers[i]);
-                    UpdateField(player, (PanelTypes)i);
-
-                    if (i != (int)PanelTypes.Clock) {
-                        for (int j = 0; j < BasePlayer.activePlayerList.Count; j++) {
-                            UpdateFieldDelayed(BasePlayer.activePlayerList[j], (PanelTypes)i);
-                        }
-                    }
-                }
-            }
-
-            if (addPanels[(int)PanelTypes.Sleeping]) {
-                for (int i = 0; i < BasePlayer.activePlayerList.Count; i++) {
-                    UpdateFieldDelayed(BasePlayer.activePlayerList[i], PanelTypes.Sleeping);
-                }
-            }
-        }
-
-        /// <summary>Called when the player is attempting to respawn.</summary>
-        /// <param name="player"></param>
-        [HookMethod("OnPlayerRespawn")]
-        private void OnPlayerRespawn(BasePlayer player) {
-            for (int i = 0; i < BasePlayer.activePlayerList.Count; i++) {
-                if (addPanels[(int)PanelTypes.Active]) {
-                    UpdateField(BasePlayer.activePlayerList[i], PanelTypes.Active);
-                }
-                if (addPanels[(int)PanelTypes.Sleeping]) {
-                    UpdateField(BasePlayer.activePlayerList[i], PanelTypes.Sleeping);
-                }
-            }
-        }
-
-        /// <summary>Called after the player has disconnected from the server.</summary>
-        /// <param name="player"></param>
-        /// <param name="reason"></param>
-        [HookMethod("OnPlayerDisconnected")]
-        private void OnPlayerDisconnected(BasePlayer player, string reason) {
-            for (int i = 0; i < BasePlayer.activePlayerList.Count; i++) {
-                if (addPanels[(int)PanelTypes.Active]) {
-                    UpdateField(BasePlayer.activePlayerList[i], PanelTypes.Active);
-                }
-                if (addPanels[(int)PanelTypes.Sleeping]) {
-                    UpdateField(BasePlayer.activePlayerList[i], PanelTypes.Sleeping);
-                }
-            }
-        }
-        #endregion
-
-        #region InitializeUi
-        /// <summary>Initializes the panel data into the static container variable.</summary>
-        /// <param name="panelData">The panel data that should be initialized.</param>
-        private void InitializeStaticContainer(PanelData panelData) {
-            string iconId = default(string);
-            FileManager.TryGetValue(panelData.panelType.ToString(), out iconId);
-
-            staticContainers[(int)panelData.panelType] = ToElementContainer(
-                new ElementData(
-                    UniqueElementName(ContainerTypes.Static,  ContainerParent, panelData.panelType.ToString()),
-                    ContainerParent,
-                    new ComponentData(ComponentTypes.RectTransform, panelData.backgroundRect),
-                    new ComponentData(ComponentTypes.Image, panelData.backgroundImage)
-                ),
-                new ElementData(
-                    UniqueElementName(ContainerTypes.Static, ContainerParent, panelData.panelType.ToString() + "Icon"),
-                    UniqueElementName(ContainerTypes.Static, ContainerParent, panelData.panelType.ToString()),
-                    new ComponentData(ComponentTypes.RectTransform, panelData.iconRect),
-                    new ComponentData(ComponentTypes.Image, new Dictionary<string, object> {
-                        { ImageProperties.color, panelData.iconImage[ImageProperties.color] },
-                        { ImageProperties.uri, iconId }
-                    })
-                )
-            );
-        }
-
-        /// <summary>Reinitializes the static Ui.</summary>
-        /// <param name="key">The key of the icon (equal to the panel it belongs to).</param>
-        /// <param name="value">The value of the icon.</param>
-        private void IconLoaded(string key, string value) {
-            int panelIndex = (int)(EnumPlus.ToEnum<PanelTypes>(key));
-
-            for (int j = 0; j < BasePlayer.activePlayerList.Count; j++) {
-                CuiHelper.DestroyUi(BasePlayer.activePlayerList[j], UniqueElementName(ContainerTypes.Static, ContainerParent, ((PanelTypes)panelIndex).ToString()));
-            }
-
-            InitializeStaticContainer(panelsData[panelIndex]);
-
-            for (int j = 0; j < BasePlayer.activePlayerList.Count; j++) {
-                CuiHelper.AddUi(BasePlayer.activePlayerList[j], staticContainers[panelIndex]);
-                UpdateField(BasePlayer.activePlayerList[j], (PanelTypes)panelIndex);
-            }
-        }
-        #endregion
-
-        #region UpdateUi
-        /// <summary>Updates the player's panel.</summary>
-        /// <param name="player">The player for who the panel should be updated.</param>
-        /// <param name="panelData">The data of the panel that will be updated.</param>
-        /// <param name="replacements">The text elements that will be replaced from the normal format.</param>
-        /// <seealso cref="UpdateField"/>
-        private void UpdateField(BasePlayer player, PanelData panelData, params StringPlus.ReplacementData[] replacements) {
-            CuiHelper.DestroyUi(player, UniqueElementName(ContainerTypes.Dynamic, ContainerParent, panelData.panelType.ToString()));
-
-            CuiElementContainer container = ToElementContainer(
-                new ElementData(
-                    UniqueElementName(ContainerTypes.Dynamic, ContainerParent, panelData.panelType.ToString()),
-                    ContainerParent,
-                    new ComponentData(ComponentTypes.RectTransform, panelData.textRect),
-                    new ComponentData(ComponentTypes.Text, new Dictionary<string, object> {
-                        { TextProperties.align, panelData.textText[TextProperties.align] },
-                        { TextProperties.color, panelData.textText[TextProperties.color] },
-                        { TextProperties.font, panelData.textText[TextProperties.font] },
-                        { TextProperties.fontSize, panelData.textText[TextProperties.fontSize] },
-                        { TextProperties.text, StringPlus.Replace(panelData.textText[TextProperties.text].ToString(), replacements) }
-                    })
-                )
-            );
-            
-            CuiHelper.AddUi(player, container);
-        }
-
-        /// <summary>Updates the player's panel.</summary>
-        /// <param name="player">The player for who the panel should be updated.</param>
-        /// <param name="panelType">The panel type that should be updated.</param>
-        private void UpdateField(BasePlayer player, PanelTypes panelType) {
-            List<StringPlus.ReplacementData> replacements = new List<StringPlus.ReplacementData>();
-            switch (panelType) {
-                case PanelTypes.Active:
-                    replacements.Add(new StringPlus.ReplacementData(replacementPrefix + FieldTypes.PlayersActive.ToString().ToUpper() + replacementSufix, BasePlayer.activePlayerList.Count.ToString().PadLeft(ConVar.Server.maxplayers.ToString().Length, '0')));
-                    replacements.Add(new StringPlus.ReplacementData(replacementPrefix + FieldTypes.PlayerMax.ToString().ToUpper() + replacementSufix, ConVar.Server.maxplayers.ToString()));
-                    break;
-                case PanelTypes.Sleeping:
-                    replacements.Add(new StringPlus.ReplacementData(replacementPrefix + FieldTypes.PlayersSleeping.ToString().ToUpper() + replacementSufix, BasePlayer.sleepingPlayerList.Count.ToString()));
-                    break;
-                case PanelTypes.Clock:
-                    replacements.Add(new StringPlus.ReplacementData(replacementPrefix + FieldTypes.Time.ToString().ToUpper() + replacementSufix, TIME));
-                    break;
-            }
-            UpdateField(player, panelsData[(int)panelType], replacements.ToArray());
-        }
-
-        /// <summary>Updates the player's panel with a delay of one frame.</summary>
-        /// <param name="player">The player for who the panel should be updated.</param>
-        /// <param name="panel">The panel type that should be updated.</param>
-        private void UpdateFieldDelayed(BasePlayer player, PanelTypes panelType) {
-            NextFrame(() => {
-                UpdateField(player, panelType);
-            });
-        }
-
-        /// <summary>Start a function that repeats updating a panel for each active player.</summary>
-        /// <param name="panelType">The panel that should be updated.</param>
-        /// <param name="updateInterval">The time in between updating the panel in milliseconds.</param>
-        private void StartRepeatingFieldUpdate(PanelTypes panelType, float updateInterval) {
-            // Updates the time if the repeating panel is the clock.
-            if (panelType == PanelTypes.Clock) {
-                TIME = TIMERAW;
-            }
-
-            for (int i = 0; i < BasePlayer.activePlayerList.Count; i++) {
-                if (!BasePlayer.activePlayerList[i].IsSleeping()) {
-                    UpdateField(BasePlayer.activePlayerList[i], panelType);
-                }
-            }
-
-            timer.Once(updateInterval / 1000f, () => {
-                StartRepeatingFieldUpdate(panelType, updateInterval);
-            });
-        }
-        #endregion
     }
 }
 
 namespace Oxide.Plugins.BasePlugin {
     /// <summary>Base class to extend plugins from.</summary>
-    public class BaseUiPlus : RustPlugin {
+    [Info("BasePlus", "RedKenrok", "1.0.0")]
+    // Rename 'BasePlus' to 'base' followed by the name of your plugin.
+    public class BasePlus : RustPlugin {
         #region Enums
         /// <summary>The different container types.</summary>
         public enum ContainerTypes { Static = 0, Dynamic = 1 };
@@ -553,12 +56,12 @@ namespace Oxide.Plugins.BasePlugin {
         public virtual string pluginName {
             get {
                 // Change this to same name as the class.
-                return "BaseUiPlus";
+                return "BasePlus";
             }
         }
 
         /// <summary>This instance of the plugin.</summary>
-        public static BaseUiPlus instance = null;
+        public static BasePlus instance = null;
 
         /// <summary>Please use gameObject instead of this.</summary>
         /// <seealso cref="gameObject"/>
@@ -580,7 +83,7 @@ namespace Oxide.Plugins.BasePlugin {
         #endregion
 
         #region Constructor
-        public BaseUiPlus() {
+        public BasePlus() {
             // Adds singleton pattern.
             instance = this;
         }
@@ -909,7 +412,7 @@ namespace Oxide.Plugins.BasePlugin {
                     }
                 }
                 else {
-                    BaseUiPlus.instance.PrintWarning(www.error);
+                    BasePlus.instance.PrintWarning(www.error);
                 }
             }
         }

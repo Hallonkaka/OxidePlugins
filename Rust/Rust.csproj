@@ -85,9 +85,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\BasePlugin\Scripts\BasePlus.cs" />
+    <Compile Include="Assets\LevelsPlus\Scripts\LevelsPlus.cs" />
     <Compile Include="Assets\UiPlus\Scripts\UiPlus.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Assets\LevelsPlus\Images\Icons\" />
+    <Folder Include="Assets\LevelsPlus\Screenshots\" />
     <Folder Include="Assets\UiPlus\Images\Icons\" />
     <Folder Include="Assets\UiPlus\Sceenshots\" />
     <Folder Include="Properties\" />
