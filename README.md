@@ -27,9 +27,12 @@ The plugin adds the possibility for enabling several highly customizable panels:
 	* Able to reflect the current in-game time down to the seconds. It also allows to switch between a 12 hour and 24 hour format.
 
 ####Planned
-Make sure the UI elements are only visible when the other elements are too. In other words have the elements removed when in menu, but on screen when walking around and in the inventory.
-
-~~As of right now this plugin does not have any planned features.~~ However feel free to make suggestions using the issues tab of the repository as I am always interested in making improvements.
+* Add player coordinates.
+* Add player facing direction.
+* Add an icon indicating helicopter alerts.
+* Add an icon indicating radiation alerts.
+* Add an icon indicating airdrop alerts.
+As always feel free to make suggestions using the issues tab of the repository as I am always interested in making improvements.
 
 ####Configuration
 As mentioned earlier this plugin is aimed at being highly customizable. On installation it will create a configuration file when it is initialized and none is present yet. On updates of the plugin it might add new elements to the configuration file, in this case it will notify you by placing a warning in the console. It is however still recommended to remove the configuration file when updating it to a new version. Remove a part of the file within braces '{}' including them, will be reinitialized with the default the next time the plugin is loaded. This can be an easy way to reset only part of the configuration file.
