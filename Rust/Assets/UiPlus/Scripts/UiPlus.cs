@@ -365,6 +365,7 @@ namespace Oxide.Plugins {
         private void OnPlayerSleepEnded(BasePlayer player) {
             for (int i = 0; i < panelTypesCount; i++) {
                 if (addPanels[i]) {
+                    CuiHelper.DestroyUi(player, UniqueElementName(ContainerTypes.Static, ContainerParent, ((PanelTypes) i).ToString()));
                     CuiHelper.AddUi(player, staticContainers[i]);
                     UpdateField(player, (PanelTypes)i);
 
@@ -422,7 +423,7 @@ namespace Oxide.Plugins {
 
             staticContainers[(int)panelData.panelType] = ToElementContainer(
                 new ElementData(
-                    UniqueElementName(ContainerTypes.Static,  ContainerParent, panelData.panelType.ToString()),
+                    UniqueElementName(ContainerTypes.Static, ContainerParent, panelData.panelType.ToString()),
                     ContainerParent,
                     new ComponentData(ComponentTypes.RectTransform, panelData.backgroundRect),
                     new ComponentData(ComponentTypes.Image, panelData.backgroundImage)
