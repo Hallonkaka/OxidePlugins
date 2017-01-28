@@ -9,10 +9,8 @@
 //      GNU GENERAL PUBLIC LICENSE (Version 3, 29 June 2007)
 //
 using Oxide.Core;
+using Oxide.Core.Plugins;
 using Oxide.Game.Rust.Cui;
-
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 using System;
 using System.Collections;
@@ -23,25 +21,400 @@ using System.Text;
 using UnityEngine;
 
 namespace Oxide.Plugins {
-    [Info("NewPlugin", "RedKenrok", "1.0.0", ResourceId = 99999)]
-    [Description("A new and totally funtional plugin.")]
-    // Rename 'NewPlugin' to the name of your plugin.
-    public class NewPlugin : BasePlugin.BasePlus {
+    [Info("LevelsPlus", "RedKenrok", "1.0.0")]
+    [Description("")]
+    public class LevelsPlus : BasePlugin.BaseLevelPlus {
         /// <summary>The name of the plugin.</summary>
         public override string pluginName {
             get {
-                // Change this to same name as the class.
-                return "NewPlugin";
+                return "LevelsPlus";
             }
         }
+
+        #region Enums
+        /// <summary>The different types of skills.</summary>
+        private enum SkillTypes { Gathering = 0, Resource = 1, Crafting = 2, Combat = 3 };
+        /// <summary>The amount of different skills.</summary>
+        private static readonly int skillTypesCount = Enum.GetValues(typeof(SkillTypes)).Length;
+
+        /// <summary>The different types of items counting as gathering.</summary>
+        private enum ItemsGathering { Cloth, Mushroom, Corn, Pumpkin, SeedHemp, SeedPumpkin, SeedCorn };
+        /// <summary>The amount of different gathering items.</summary>
+        private static readonly int itemsGatheringCount = Enum.GetValues(typeof(ItemsGathering)).Length;
+        /// <summary>The different types of items counting as resource.</summary>
+        private enum ItemsResource { MetalOre, SulfurOre, Stones, Wood };
+        /// <summary>The amount of different resource items.</summary>
+        private static readonly int itemsResourceCount = Enum.GetValues(typeof(ItemsResource)).Length;
+        #endregion
+
+        #region Classes
+        /// <summary>A struct that can contain all the component data for one panel.</summary>
+        private struct PanelData {
+            /// <summary>The panel type to which this data belongs.</summary>
+            public SkillTypes skillType;
+
+            /// <summary>The data for the CuiRectTransformComponent for the background of the panel.</summary>
+            public Dictionary<string, object> backgroundRect;
+            /// <summary>The data for the CuiImageComponent for the background of the panel.</summary>
+            public Dictionary<string, object> backgroundImage;
+            /// <summary>The data for the CuiRectTransformComponent for the icon of the panel.</summary>
+            public Dictionary<string, object> iconRect;
+            /// <summary>The data for the CuiImageComponent for the icon of the panel.</summary>
+            public Dictionary<string, object> iconImage;
+            /// <summary>The data for the CuiRectTransformComponent for the bar of the panel.</summary>
+            public Dictionary<string, object> barRect;
+            /// <summary>The data for the CuiImageComponent for the bar of the panel.</summary>
+            public Dictionary<string, object> barImage;
+            /// <summary>The data for the CuiRectTransformComponent for the text of the panel.</summary>
+            public Dictionary<string, object> textRect;
+            /// <summary>The data for the CuiTextComponent for the text of the panel.</summary>
+            public Dictionary<string, object> textText;
+
+            /// <summary>Constructor call for the PanelData struct.</summary>
+            /// <param name="backgroundRect">The data for the CuiRectTransformComponent for the background of the panel.</param>
+            /// <param name="backgroundImage">The data for the CuiImageComponent for the background of the panel.</param>
+            /// <param name="iconRect">The data for the CuiRectTransformComponent for the icon of the panel.</param>
+            /// <param name="iconImage">The data for the CuiImageComponent for the icon of the panel.</param>
+            /// <param name="barRect">The data for the CuiRectTransformComponent for the bar of the panel.</param>
+            /// <param name="barImage">The data for the CuiImageComponent for the bar of the panel.</param>
+            /// <param name="textRect">The data for the CuiRectTransformComponent for the text of the panel.</param>
+            /// <param name="textText">The data for the CuiTextComponent for the text of the panel.</param>
+            public PanelData(SkillTypes panelType, Dictionary<string, object> backgroundRect, Dictionary<string, object> backgroundImage, Dictionary<string, object> iconRect, Dictionary<string, object> iconImage, Dictionary<string, object> barRect, Dictionary<string, object> barImage, Dictionary<string, object> textRect, Dictionary<string, object> textText) {
+                this.skillType = panelType;
+
+                this.backgroundRect = backgroundRect;
+                this.backgroundImage = backgroundImage;
+                this.iconRect = iconRect;
+                this.iconImage = iconImage;
+                this.barRect = barRect;
+                this.barImage = barImage;
+                this.textRect = textRect;
+                this.textText = textText;
+            }
+        }
+        #endregion
+
+        #region Variables
+        /// <summary>The static containers in the form of an array ordered according to the panels enumerator.</summary>
+        private CuiElementContainer[] staticContainers;
+
+        /// <summary>The character used in between values of the Json.</summary>
+        private static readonly char valueSeperator = ' ';
+
+        /// <summary>The character put before the display field value in order to signal it has to be replaced.</summary>
+        private static readonly char replacementPrefix = '{';
+        /// <summary>The character put after the display field value in order to signal it has to be replaced.</summary>
+        private static readonly char replacementSufix = '}';
+        #endregion
+
+        #region Variables panel data
+        /// <summary>Which panels to add ordered like the PanelTypes enum.</summary>
+        private bool[] addSkills = new bool[4] {
+            true,
+            true,
+            true,
+            true
+        };
+
+        /// <summary>An array of data from each panel ordered in the same as the PanelTypes enum.</summary>
+        private PanelData[] panelsData = new PanelData[1] {
+            // Active
+            new PanelData(
+                // SkillType
+                SkillTypes.Gathering,
+                // Background Rect
+                new Dictionary<string, object> {
+                    { RectTransformProperties.anchorMin, "0 0" },
+                    { RectTransformProperties.anchorMax, "0.048 0.036" },
+                    { RectTransformProperties.offset, "81 72" }
+                },
+                // Background Image
+                new Dictionary<string, object> {
+                    { ImageProperties.color, "1 0.95 0.875 0.025" }
+                },
+                // Icon Rect
+                new Dictionary<string, object> {
+                    { RectTransformProperties.anchorMin, "0 0" },
+                    { RectTransformProperties.anchorMax, "0.325 0.75" },
+                    { RectTransformProperties.offset, "2 3" }
+                },
+                // Icon Icon
+                new Dictionary<string, object> {
+                    { ImageProperties.color, "0.7 0.7 0.7 1" },
+                    { ImageProperties.uri, "http://i.imgur.com/UY0y5ZI.png" }
+                },
+                // Bar Rect
+                new Dictionary<string, object> {
+                    { RectTransformProperties.anchorMin, "0 0" },
+                    { RectTransformProperties.anchorMax, "0.325 0.75" },
+                    { RectTransformProperties.offset, "2 3" }
+                },
+                // Bar Image
+                new Dictionary<string, object> {
+                    { ImageProperties.color, "0.7 0.7 0.7 1" }
+                },
+                // Text Rect
+                new Dictionary<string, object> {
+                    { RectTransformProperties.anchorMin, "0 0" },
+                    { RectTransformProperties.anchorMax, "1 1" },
+                    { RectTransformProperties.offset, "24 0" }
+                },
+                // Text Text
+                new Dictionary<string, object> {
+                    { TextProperties.align, "MiddleLeft" },
+                    { TextProperties.color, "0.85 0.85 0.85 1" },
+                    { TextProperties.font, new CuiTextComponent().Font },
+                    { TextProperties.fontSize, 14 },
+                    { TextProperties.text, replacementPrefix + "Skilltypes" + replacementSufix }
+                }
+            )
+        };
+        #endregion
+
+        #region Configuration
+        /// <summary>Initializes the data for the given panel.</summary>
+        /// <param name="panelData">The panel data to be initialized.</param>
+        /// <param name="defaultApplied">Wether or not a new field is added to the config.</param>
+        private void InitializePanelData(ref PanelData panelData, ref bool defaultApplied) {
+            panelData.backgroundRect = CheckConfigFile(panelData.skillType.ToString() + " backgroundRect", panelData.backgroundRect, ref defaultApplied);
+            panelData.backgroundImage = CheckConfigFile(panelData.skillType.ToString() + " backgroundImage", panelData.backgroundImage, ref defaultApplied);
+            panelData.iconRect = CheckConfigFile(panelData.skillType.ToString() + " iconRect", panelData.iconRect, ref defaultApplied);
+            panelData.iconImage = CheckConfigFile(panelData.skillType.ToString() + " iconImage", panelData.iconImage, ref defaultApplied);
+            panelData.barRect = CheckConfigFile(panelData.skillType.ToString() + " barRect", panelData.barRect, ref defaultApplied);
+            panelData.barImage = CheckConfigFile(panelData.skillType.ToString() + " barImage", panelData.barImage, ref defaultApplied);
+            panelData.textRect = CheckConfigFile(panelData.skillType.ToString() + " textRect", panelData.textRect, ref defaultApplied);
+            panelData.textText = CheckConfigFile(panelData.skillType.ToString() + " textText", panelData.textText, ref defaultApplied);
+        }
+
+        /// <summary>Retrieves all the data from the configuration file and adds default data if it is not present.</summary>
+        private void InitializeConfiguration() {
+            bool defaultApplied = false;
+
+            addSkills[0] = CheckConfigFile("add ...", addSkills[0], ref defaultApplied);
+
+            // Read and write config here.
+            for (int i = 0; i < skillTypesCount; i++) {
+                InitializePanelData(ref panelsData[i], ref defaultApplied);
+            }
+
+            SaveConfig();
+
+            if (defaultApplied) {
+                PrintWarning("New field(s) added to the configuration file please view and edit if necessary.");
+            }
+        }
+        #endregion
+
+        #region Hooks
+        [HookMethod("Loaded")]
+        private void Loaded() {
+            // Adds singleton pattern.
+            instance = this;
+
+            // Initializes the configuration.
+            //PrintWarning("Config read and write disabled.");
+            InitializeConfiguration();
+
+            // Takes the background rect of the panel and applies the text rect of the panel to calculate the result that will be used.
+            for (int i = 0; i < skillTypesCount; i++) {
+                panelsData[i].barRect[RectTransformProperties.anchorMin] = StringPlus.ToString((Vector2)(MathPlus.Multiply(MathPlus.ToVector(panelsData[i].backgroundRect[RectTransformProperties.anchorMin].ToString(), valueSeperator), MathPlus.ToVector(panelsData[i].barRect[RectTransformProperties.anchorMin].ToString(), valueSeperator))));
+                panelsData[i].barRect[RectTransformProperties.anchorMax] = StringPlus.ToString((Vector2)(MathPlus.Multiply(MathPlus.ToVector(panelsData[i].backgroundRect[RectTransformProperties.anchorMax].ToString(), valueSeperator), MathPlus.ToVector(panelsData[i].barRect[RectTransformProperties.anchorMax].ToString(), valueSeperator))));
+                panelsData[i].barRect[RectTransformProperties.offset] = StringPlus.ToString((Vector2)(MathPlus.ToVector(panelsData[i].backgroundRect[RectTransformProperties.offset].ToString(), valueSeperator) + MathPlus.ToVector(panelsData[i].barRect[RectTransformProperties.offset].ToString(), valueSeperator)));
+
+                panelsData[i].textRect[RectTransformProperties.anchorMin] = StringPlus.ToString((Vector2) (MathPlus.Multiply(MathPlus.ToVector(panelsData[i].backgroundRect[RectTransformProperties.anchorMin].ToString(), valueSeperator), MathPlus.ToVector(panelsData[i].textRect[RectTransformProperties.anchorMin].ToString(), valueSeperator))));
+                panelsData[i].textRect[RectTransformProperties.anchorMax] = StringPlus.ToString((Vector2)(MathPlus.Multiply(MathPlus.ToVector(panelsData[i].backgroundRect[RectTransformProperties.anchorMax].ToString(), valueSeperator), MathPlus.ToVector(panelsData[i].textRect[RectTransformProperties.anchorMax].ToString(), valueSeperator))));
+                panelsData[i].textRect[RectTransformProperties.offset] = StringPlus.ToString((Vector2)(MathPlus.ToVector(panelsData[i].backgroundRect[RectTransformProperties.offset].ToString(), valueSeperator) + MathPlus.ToVector(panelsData[i].textRect[RectTransformProperties.offset].ToString(), valueSeperator)));
+            }
+        }
+
+        /// <summary>Called after the server startup has been completed and is awaiting connections.</summary>
+        [HookMethod("OnServerInitialized")]
+        private void OnServerInitialized() {
+            // Initializes the static containers for each panel.
+            staticContainers = new CuiElementContainer[skillTypesCount];
+            // Starts retrieving the icons and rebuilds the static panels once they are loaded.
+            FileManager.OnFileLoaded onIconLoaded = new FileManager.OnFileLoaded(IconLoaded);
+            for (int i = 0; i < skillTypesCount; i++) {
+                FileManager.InitializeFile(pluginName, ((SkillTypes)i).ToString(), panelsData[i].iconImage[ImageProperties.uri].ToString(), onIconLoaded);
+            }
+
+            // Adds dynamic data to the ui.
+        }
+
+        /// <summary></summary>
+        /// <param name="player"></param>
+        [HookMethod("OnPlayerInit")]
+        private void OnPlayerInit(BasePlayer player) {
+            //Call for player data.
+            //Create if there is none.
+        }
+
+        /// <summary></summary>
+        /// <param name="player"></param>
+        /// <param name="reason"></param>
+        [HookMethod("OnPlayerDisconnected")]
+        private void OnPlayerDisconnected(BasePlayer player, string reason) {
+            //Save player data
+        }
+
+        /// <summary></summary>
+        [HookMethod("OnServerSave")]
+        private void OnServerSave() {
+            //Save all player data
+            for (int i = 0; i < BasePlayer.activePlayerList.Count; i++) {
+
+            }
+        }
+
+        /// <summary></summary>
+        /// <param name="dispenser"></param>
+        /// <param name="entity"></param>
+        /// <param name="item"></param>
+        [HookMethod("OnDispenserGather")]
+        private void OnDispenserGather(ResourceDispenser dispenser, BaseEntity entity, Item item) {
+            BasePlayer player = entity as BasePlayer;
+            if (player == null) {
+                return;
+            }
+
+            // Do the stuff
+        }
+
+        /// <summary></summary>
+        /// <param name="item"></param>
+        /// <param name="player"></param>
+        [HookMethod("OnCollectiblePickup")]
+        private void OnCollectiblePickup(Item item, BasePlayer player) {
+            string itemName = item.info.shortname.ToLower().Trim('.');
+            List<SkillTypes> skillTypeList = new List<SkillTypes>();
+
+            for (int i = 0; i < itemsGatheringCount; i++) {
+                if (((ItemsGathering)i).ToString().ToLower() == itemName) {
+                    skillTypeList.Add(SkillTypes.Gathering);
+                }
+            }
+            for (int i = 0; i < itemsResourceCount; i++) {
+                if (((ItemsResource)i).ToString().ToLower() == itemName) {
+                    skillTypeList.Add(SkillTypes.Resource);
+                }
+            }
+
+            if (skillTypeList.Count > 0) {
+                //Call stuff
+            }
+        }
+
+        /// <summary></summary>
+        /// <param name="player"></param>
+        /// <param name="item"></param>
+        [HookMethod("OnLootItem")]
+        private void OnLootItem(BasePlayer player, Item item) {
+
+        }
+
+        /// <summary></summary>
+        [HookMethod("OnItemCraftFinished")]
+        private void OnItemCraftFinished(ItemCraftTask task, Item item) {
+
+        }
+
+        /// <summary></summary>
+        /// <param name="player"></param>
+        /// <param name="info"></param>
+        [HookMethod("CanBeWounded")]
+        private void CanBeWounded(BasePlayer player, HitInfo info) {
+
+        }
+
+        /// <summary></summary>
+        /// <param name="attacker"></param>
+        /// <param name="info"></param>
+        [HookMethod("OnPlayerAttack")]
+        private void OnPlayerAttack(BasePlayer attacker, HitInfo info) {
+
+        }
+
+        /// <summary></summary>
+        /// <param name="entity"></param>
+        /// <param name="info"></param>
+        [HookMethod("OnEntityDeath")]
+        private void OnEntityDeath(BaseCombatEntity entity, HitInfo info) {
+            BasePlayer player = entity as BasePlayer;
+            if (player == null) {
+                return;
+            }
+
+            //Remove progress
+        }
+        #endregion
+
+        #region InitializeUi
+        /// <summary>Initializes the panel data into the static container variable.</summary>
+        /// <param name="panelData">The panel data that should be initialized.</param>
+        private void InitializeStaticContainer(PanelData panelData) {
+            string iconId = default(string);
+            FileManager.TryGetValue(panelData.skillType.ToString(), out iconId);
+
+            staticContainers[(int)panelData.skillType] = ToElementContainer(
+                new ElementData(
+                    UniqueElementName(ContainerTypes.Static, ContainerParent, panelData.skillType.ToString()),
+                    ContainerParent,
+                    new ComponentData(ComponentTypes.RectTransform, panelData.backgroundRect),
+                    new ComponentData(ComponentTypes.Image, panelData.backgroundImage)
+                ),
+                new ElementData(
+                    UniqueElementName(ContainerTypes.Static, ContainerParent, panelData.skillType.ToString() + "Icon"),
+                    UniqueElementName(ContainerTypes.Static, ContainerParent, panelData.skillType.ToString()),
+                    new ComponentData(ComponentTypes.RectTransform, panelData.iconRect),
+                    new ComponentData(ComponentTypes.Image, new Dictionary<string, object> {
+                        { ImageProperties.color, panelData.iconImage[ImageProperties.color] },
+                        { ImageProperties.uri, iconId }
+                    })
+                )
+            );
+        }
+
+        /// <summary>Reinitializes the static Ui.</summary>
+        /// <param name="key">The key of the icon (equal to the skill it belongs to).</param>
+        /// <param name="value">The value of the icon.</param>
+        private void IconLoaded(string key, string value) {
+            int panelIndex = (int)(EnumPlus.ToEnum<SkillTypes>(key));
+
+            for (int j = 0; j < BasePlayer.activePlayerList.Count; j++) {
+                CuiHelper.DestroyUi(BasePlayer.activePlayerList[j], UniqueElementName(ContainerTypes.Static, ContainerParent, ((SkillTypes)panelIndex).ToString()));
+            }
+
+            InitializeStaticContainer(panelsData[panelIndex]);
+
+            for (int j = 0; j < BasePlayer.activePlayerList.Count; j++) {
+                CuiHelper.AddUi(BasePlayer.activePlayerList[j], staticContainers[panelIndex]);
+                UpdateField(BasePlayer.activePlayerList[j], (SkillTypes)panelIndex);
+            }
+        }
+        #endregion
+
+        #region UpdateUi
+        private void UpdateField(BasePlayer player, SkillTypes skillType) {
+
+        }
+
+        /// <summary>Updates the player's panel with a delay of one frame.</summary>
+        /// <param name="player">The player for who the panel should be updated.</param>
+        /// <param name="skillType">The skill type that should be updated.</param>
+        private void UpdateFieldDelayed(BasePlayer player, SkillTypes skillType) {
+            NextFrame(() => {
+                UpdateField(player, skillType);
+            });
+        }
+        #endregion
     }
 }
 
 namespace Oxide.Plugins.BasePlugin {
     /// <summary>Base class to extend plugins from.</summary>
-    [Info("BasePlus", "RedKenrok", "1.0.0")]
+    [Info("BaseLevelPlus", "RedKenrok", "1.0.0")]
     // Rename 'BasePlus' to 'base' followed by the name of your plugin.
-    public class BasePlus : RustPlugin {
+    public class BaseLevelPlus : RustPlugin {
         #region Enums
         /// <summary>The different container types.</summary>
         public enum ContainerTypes { Static = 0, Dynamic = 1 };
@@ -59,12 +432,12 @@ namespace Oxide.Plugins.BasePlugin {
         public virtual string pluginName {
             get {
                 // Change this to same name as the class.
-                return "BasePlus";
+                return "BaseLevelPlus";
             }
         }
 
         /// <summary>This instance of the plugin.</summary>
-        public static BasePlus instance = null;
+        public static BaseLevelPlus instance = null;
 
         /// <summary>Please use gameObject instead of this.</summary>
         /// <seealso cref="gameObject"/>
@@ -78,13 +451,15 @@ namespace Oxide.Plugins.BasePlugin {
                 return _gameObject;
             }
         }
+        // Don't use the following. For some reason that breaks it...
+        //public static GameObject gameObject = new GameObject(pluginName + "Object");
 
         /// <summary>The name of the parent of the ui elements's container.</summary>
-        public static readonly string ContainerParent = "Hud.Menu";
+        public static readonly string ContainerParent = "Overlay";
         #endregion
 
         #region Constructor
-        public BasePlus() {
+        public BaseLevelPlus() {
             // Adds singleton pattern.
             instance = this;
         }
@@ -109,48 +484,6 @@ namespace Oxide.Plugins.BasePlugin {
                 defaultApplied = true;
                 return defaultValue;
             }
-        }
-
-        public class ComponentBaseConfig {
-            [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-            public bool enabled { get; set; } = true;
-
-            [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-            public float width { get; set; } = 1f;
-
-            [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-            public float height { get; set; } = 1f;
-
-            [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-            public float positionX { get; set; } = 0f;
-
-            [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-            public float positionY { get; set; } = 0f;
-        }
-
-        public class ComponentImageConfig : ComponentBaseConfig {
-            [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-            public string color { get; set; } = "1 1 1 1";
-        }
-
-        public class ComponentIconConfig : ComponentImageConfig {
-            [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-            public string uri { get; set; }
-        }
-
-        public class ComponentTextConfig : ComponentBaseConfig {
-            [JsonConverter(typeof(StringEnumConverter))]
-            [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-            public TextAnchor alignment { get; set; } = TextAnchor.MiddleCenter;
-
-            [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-            public string color { get; set; } = "1 1 1 1";
-
-            [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-            public int fontSize { get; set; } = 14;
-
-            [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-            public string text { get; set; } = "No text";
         }
         #endregion
 
@@ -363,6 +696,8 @@ namespace Oxide.Plugins.BasePlugin {
                     return _instance;
                 }
             }
+            // Don't use the following. For some reason that breaks it...
+            //public static FileManager instance = BasePlus.gameObject.AddComponent<FileManager>();
 
             /// <summary>The path leading to the data directory of the plugin.</summary>
             private static readonly string dataDirectoryPath = "file://" + Interface.Oxide.DataDirectory + Path.DirectorySeparatorChar;
@@ -453,7 +788,7 @@ namespace Oxide.Plugins.BasePlugin {
                     }
                 }
                 else {
-                    BasePlus.instance.PrintWarning(www.error);
+                    BaseLevelPlus.instance.PrintWarning(www.error);
                 }
             }
         }

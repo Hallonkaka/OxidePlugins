@@ -39,6 +39,9 @@
     <Reference Include="Assembly-CSharp-firstpass">
       <HintPath>..\Libraries\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\Libraries\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="Oxide.Core">
       <HintPath>..\Libraries\Oxide.Core.dll</HintPath>
     </Reference>

@@ -4,6 +4,7 @@ Oxide.Core.dll
 Oxide.Ext.CSharp.dll
 Oxide.Ext.SQLite.dll
 Oxide.Ext.Unity.dll
+Newtonsoft.Json.dll
 UnityEngine.dll
 UnityEngine.Networking.dll
 UnityEngine.UI.dll

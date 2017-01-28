@@ -12,6 +12,7 @@ Libraries/Oxide.Core.dll
 Libraries/Oxide.Ext.CSharp.dll
 Libraries/Oxide.Ext.SQLite.dll
 Libraries/Oxide.Ext.Unity.dll
+Libraries/Newtonsoft.Json.dll
 Libraries/UnityEngine.dll
 Libraries/UnityEngine.Networking.dll
 Libraries/UnityEngine.UI.dll
